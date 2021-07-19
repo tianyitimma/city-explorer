@@ -35,3 +35,7 @@ Actual time needed to complete: _____
 ## Lab 6 Whiteboard
 
 ![lab6 whiteboard](./src/img/image.png)
+
+## netlify site
+
+[city explorer](https://tianyi-city-explorer.netlify.app/)
