@@ -18,9 +18,11 @@ class App extends React.Component {
       location: {},
       map: {},
       dailyWeather: [],
-      showModal: false,
+      showMap: false,
+      showMovie: false,
       error: false,
-      errorMessage: ''
+      errorMessage: '',
+      movies: {}
     }
   }
 
@@ -63,14 +65,31 @@ class App extends React.Component {
     // console.log('map:', response);
     this.setState({
       map: `https://maps.locationiq.com/v3/staticmap?key=${process.env.REACT_APP_API_KEY}&center=${this.state.location.lat},${this.state.location.lon}&zoom=10`,
-      showModal: true
+      showMap: true
     })
 
   }
 
+  getMovies = async () => {
+    const API = `https://city-explorer-api-app.herokuapp.com/movies?city=${this.state.searchQuery}`
+
+    let response = await axios.get(API)
+      
+    let data = response.data;
+    this.setState({movies: data[0]})
+
+    this.setState({
+      showMovie: true
+    })
+    
+    // console.log(this.state.movies[0].title);
+      
+  }
+
   handleClose = () => {
     this.setState({
-      showModal: false
+      showMap: false,
+      showMovie: false
     })
   }
 
@@ -104,12 +123,13 @@ class App extends React.Component {
               The longitude: {this.state.location.lon}
             </Card.Text>
             <Button variant="primary" onClick={this.getMap}>See map</Button>
+            <Button variant="primary" onClick={this.getMovies}>Find Movies about this City</Button>
           </Card.Body>
         </Card>
         {this.state.dailyWeather.length && 
           <Weather forecast={this.state.dailyWeather} />
         }
-        <Modal show={this.state.showModal} onHide={this.handleClose}>
+        <Modal show={this.state.showMap} onHide={this.handleClose}>
           <Modal.Header closeButton>
             <Modal.Title>{this.state.location.display_name}</Modal.Title>
           </Modal.Header>
@@ -125,6 +145,28 @@ class App extends React.Component {
           </Modal.Footer>
         </Modal>
         
+        <Modal show={this.state.showMovie} onHide={this.handleClose}>
+          <Modal.Header closeButton>
+            <Modal.Title>{this.state.movies.title}</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <Card style={{ width: '28rem' }}>
+            <Card.Img variant="top" src={this.state.movies.image_url} />
+            </Card>
+            <Card.Text>
+              {this.state.movies.overview}
+            </Card.Text>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={this.handleClose}>
+              Close
+            </Button>
+          </Modal.Footer>
+        </Modal>
+        
+        
+        
+        
         <Alert variant="danger" show={this.state.error} >
           <Alert.Heading>Oh snap! It's not a valid city</Alert.Heading>
           <p>
@@ -135,19 +177,6 @@ class App extends React.Component {
           </Button>
         </Alert>
 
-        {/* <httpErrors errorMode="Custom" existingResponse="Replace"  >
-          <remove statusCode="500"/>
-          <error statusCode="500" path="500.html" responseMode="File"/>
-          <remove statusCode="404"/>
-          <error statusCode="404" path="404.html" responseMode="File"/>
-          <remove statusCode="400"/>
-          <error statusCode="400" value="fail">
-            <Alert variant="danger" >
-              <Alert.Heading>Oh snap! It's not a valid city</Alert.Heading>
-            
-            </Alert>
-          </error>
-        </httpErrors>  */}
       </>
     )
   }
