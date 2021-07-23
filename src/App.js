@@ -151,7 +151,7 @@ class App extends React.Component {
           </Modal.Header>
           <Modal.Body>
             <Card style={{ width: '28rem' }}>
-            <Card.Img variant="top" src={this.state.movies.image_url} />
+            <Card.Img variant="top" src={`https://image.tmdb.org/t/p/w500/${this.state.movies.image_url}`} />
             </Card>
             <Card.Text>
               {this.state.movies.overview}
