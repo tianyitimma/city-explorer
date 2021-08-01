@@ -1,12 +1,12 @@
 import React from 'react';
 import axios from 'axios';
-import Form from 'react-bootstrap/Form';
-import Button from 'react-bootstrap/Button';
-import Card from 'react-bootstrap/Card';
-import Modal from 'react-bootstrap/Modal';
+
 import 'bootstrap/dist/css/bootstrap.min.css';
-import Alert from 'react-bootstrap/Alert'
-import Weather from './Weather'
+import Weather from './Weather';
+import FindCity from './FindCity';
+import Movies from './Movies';
+import ShowCity from './ShowCity';
+import ShowMap from './ShowMap';
 
 
 class App extends React.Component {
@@ -19,163 +19,100 @@ class App extends React.Component {
       map: {},
       dailyWeather: [],
       showMap: false,
-      showMovie: false,
-      error: false,
-      errorMessage: '',
-      movies: {}
+      movies: [],
+      showMovies: false,
+      showWeather: false
     }
   }
 
   getLocation = async () => {
-    const API = `https://us1.locationiq.com/v1/search.php?key=${process.env.REACT_APP_API_KEY}&q=${this.state.searchQuery}&format=json`;
-
-    
-
-    const response = await axios.get(API);
-
-    // console.log('LOCATION IQ DATA:', response);
-    
-    if (response.statusCode === "400" || response.statusCode === "404" || response.statusCode === "500") {
-      //do some thing , error  handling
+    try{
+      const API = `https://us1.locationiq.com/v1/search.php?key=${process.env.REACT_APP_API_KEY}&q=${this.state.searchQuery}&format=json`;
+      const response = await axios.get(API);
       this.setState({
-        error: true,
-        errorMessage: response.createError
+        location: response.data[0]
+        })
+    } catch(err) {
+      console.error(err);
+    }
+  }
 
+  getWeather = async () => {
+    try{
+      const weatherAPI = `https://city-explorer-api-app.herokuapp.com/weather?lon=${this.state.location.lon}&lat=${this.state.location.lat}`
+
+      const weatherResponse = await axios.get(weatherAPI);
+      this.setState({
+        dailyWeather: weatherResponse.data,
+        showWeather: true
       })
-    };
+      
+    } catch(err) {
+      console.error(err);
+    }
+  }
+  updateCity = (e) => {
+    this.setState({ searchQuery: e.target.value});
+  }
+  submitCity = () => {
+    this.getLocation();
+    this.getMap();
+    this.getMovies();
 
-    this.setState({
-    location: response.data[0]
-    })
-
-    const weatherAPI = `http://localhost:3001/weather?city=${this.state.searchQuery}&lon=${this.state.location.lon}&lat=${this.state.location.lat}`
-
-    const weatherResponse = await axios.get(weatherAPI);
-
-    this.setState({
-      dailyWeather: weatherResponse
-    })
-    // console.log('current location', this.state.location);
   }
 
   getMap = () => {
-    // const API = `https://maps.locationiq.com/v3/staticmap?key=${process.env.REACT_APP_API_KEY}&center=${this.state.location.lat},${this.state.location.lon}&zoom=10`;
-
-    // const response = await axios.get(API);
-    // console.log('map:', response);
-    this.setState({
-      map: `https://maps.locationiq.com/v3/staticmap?key=${process.env.REACT_APP_API_KEY}&center=${this.state.location.lat},${this.state.location.lon}&zoom=10`,
-      showMap: true
-    })
-
+      this.setState({map: `https://maps.locationiq.com/v3/staticmap?key=${process.env.REACT_APP_API_KEY}&center=${this.state.location.lat},${this.state.location.lon}&zoom=10`})
   }
 
   getMovies = async () => {
-    const API = `https://city-explorer-api-app.herokuapp.com/movies?city=${this.state.searchQuery}`
+    try{
+      const API = `https://city-explorer-api-app.herokuapp.com/movies?city=${this.state.searchQuery}`
 
-    let response = await axios.get(API)
-      
-    let data = response.data;
-    this.setState({movies: data[0]})
-
-    this.setState({
-      showMovie: true
-    })
-    
-    // console.log(this.state.movies[0].title);
+      let response = await axios.get(API)
+        
+      let data = response.data;
+      this.setState({movies: data})
+    } catch(err){
+      console.error(err);
+    }
       
   }
-
-  handleClose = () => {
+  showMap = () =>{
+    this.getMap();
     this.setState({
-      showMap: false,
-      showMovie: false
+      showMap: true
     })
   }
+  closeMap = () => this.setState({
+    showMap: false
+  })
+  showMovies = () => this.setState({
+    showMovies: true
+  })
+  closeMovies = () => this.setState({
+    showMovies: false
+  })
+  closeWeather = () => this.setState({
+    showWeather: false
+  })
 
-  closeError = () => {
-    this.setState({
-      error: false
-    })
-  }
 
   render() {
     return (
       <>
-        <Form>
-          <Form.Group >
-            <Form.Label>
-              Location Name
-            </Form.Label>
-            <Form.Control type="text" onChange={(e) => this.setState({searchQuery: e.target.value})} />
-            <Button  onClick={this.getLocation} >Explore!</Button>
-          </Form.Group>
-        </Form>
-
-        <Card style={{ width: '18rem' }}>
-          
-          <Card.Body>
-            <Card.Title>The location: {this.state.location.display_name}</Card.Title>
-            <Card.Text>
-              The latitude: {this.state.location.lat}
-            </Card.Text>
-            <Card.Text>
-              The longitude: {this.state.location.lon}
-            </Card.Text>
-            <Button variant="primary" onClick={this.getMap}>See map</Button>
-            <Button variant="primary" onClick={this.getMovies}>Find Movies about this City</Button>
-          </Card.Body>
-        </Card>
-        {this.state.dailyWeather.length && 
-          <Weather forecast={this.state.dailyWeather} />
-        }
-        <Modal show={this.state.showMap} onHide={this.handleClose}>
-          <Modal.Header closeButton>
-            <Modal.Title>{this.state.location.display_name}</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <Card style={{ width: '28rem' }}>
-            <Card.Img variant="top" src={this.state.map} />
-            </Card>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="secondary" onClick={this.handleClose}>
-              Close
-            </Button>
-          </Modal.Footer>
-        </Modal>
-        
-        <Modal show={this.state.showMovie} onHide={this.handleClose}>
-          <Modal.Header closeButton>
-            <Modal.Title>{this.state.movies.title}</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <Card style={{ width: '28rem' }}>
-            <Card.Img variant="top" src={`https://image.tmdb.org/t/p/w500/${this.state.movies.image_url}`} />
-            </Card>
-            <Card.Text>
-              {this.state.movies.overview}
-            </Card.Text>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="secondary" onClick={this.handleClose}>
-              Close
-            </Button>
-          </Modal.Footer>
-        </Modal>
+        <FindCity updateCity={this.updateCity} submitCity={this.submitCity} />
+        <ShowCity location={this.state.location} showMap={this.showMap} showMovies={this.showMovies} getWeather={this.getWeather} />
         
         
+        <Weather location={this.state.searchQuery} forecast={this.state.dailyWeather} showWeather={this.state.showWeather} closeWeather={this.closeWeather}/>
         
         
-        <Alert variant="danger" show={this.state.error} >
-          <Alert.Heading>Oh snap! It's not a valid city</Alert.Heading>
-          <p>
-            {this.errorMessage}
-          </p>
-          <Button onClick={this.closeError} >
-            Close and try again
-          </Button>
-        </Alert>
+        <ShowMap location={this.state.location} map={this.state.map} showMap={this.state.showMap} closeMap={this.closeMap} />
+        
+        {this.state.showMovies && 
+          <Movies movies={this.state.movies} showMovies={this.state.showMovies} closeMovies={this.closeMovies}/>
+        } 
 
       </>
     )
