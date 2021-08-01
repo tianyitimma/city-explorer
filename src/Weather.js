@@ -3,6 +3,7 @@ import Card from 'react-bootstrap/Card';
 import Button from 'react-bootstrap/Button';
 import Modal from 'react-bootstrap/Modal';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import WeatherDay from './WeatherDay';
 
 class Weather extends React.Component{
   render() {
@@ -13,26 +14,11 @@ class Weather extends React.Component{
           <Modal.Header closeButton>
           </Modal.Header>
           <Modal.Body>
-            <Card style={{ width: '18rem' }}>
-              
-              <Card.Body>
+            <Card style={{ width: '20rem' }}>
               <Card.Title>The weather forecast of {this.props.location}</Card.Title>
-              
               {this.props.forecast.map((data, idx) => {
-                return <div key={idx}>
-                
-                  <Card.Text>
-                    {data.date}
-                  </Card.Text>
-                  <Card.Text>
-                    {data.description}
-                  </Card.Text>
-              
-                  </div>
-                  
-                })
-              } 
-                </Card.Body>
+                return <WeatherDay data={data} key={idx} />
+              })} 
               </Card>
           </Modal.Body>
           <Modal.Footer>
